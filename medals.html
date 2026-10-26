@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medal wall</title>
+<link rel="icon" href="assets/icon-192.png">
+<style>
+  :root{--ink:#0a1222;--panel:#101d36;--panel2:#16264a;--line:#2a3f68;--control-line:#4d71b7;--text:#e8eefc;--muted:#9fb1d4;--amber:#ffb454;--amber2:#ff8c3a;--blue:#6fb7ff;--green:#4fd18b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:calc(18px * var(--ts, 1));line-height:1.45}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 18px 50px}
+  h1{font-size:calc(clamp(30px,6vw,46px) * var(--tsh, 1));margin:0;letter-spacing:-.01em} .sub{color:var(--muted);margin:4px 0 16px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn:focus-visible,a:focus-visible{outline:3px solid #ffb454;outline-offset:3px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--control-line);background:var(--panel2);color:var(--text);border-radius:14px;padding:12px 18px;min-height:48px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+  .btn.primary{background:linear-gradient(180deg,var(--amber),var(--amber2));color:#2a1600;border-color:transparent}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0 22px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .stat b{display:block;font-size:calc(30px * var(--tsh, 1));line-height:1} .stat span{color:var(--muted);font-size:calc(14px * var(--ts, 1))}
+  .wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px;list-style:none;margin:0;padding:0}
+  .medal{text-align:center}
+  .medal .disc{position:relative;width:170px;height:170px;margin:0 auto 8px}
+  .medal .disc img.face{position:absolute;left:15%;top:15%;width:70%;height:70%;border-radius:50%;object-fit:cover;background:radial-gradient(circle at 50% 40%,#22375f,#101d36)}
+  .medal .disc img.frame{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .medal .disc.framed .ring{display:none}
+  .medal .disc .ring{position:absolute;left:12%;top:12%;width:76%;height:76%;border-radius:50%;border:6px solid var(--metal,var(--amber));box-shadow:0 0 18px var(--metal-soft,rgba(255,180,84,.45))}
+  /* The campaign's own emblem, struck onto the medal's lower rim over the bottom star. Same
+     position on the wall as on the shelf and in the ceremony. Earned medals only. */
+  .medal .disc img.emblem{position:absolute;left:50%;top:84%;width:36%;height:auto;transform:translate(-50%,-50%);filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+  .medal.locked .disc img.emblem{display:none}
+  /* Three medals, one picture each: bronze with garnet stones, silver with ice-blue, gold with
+     sapphire. The colors below are for the ring, the glow and the word; the medal is the picture. */
+  .metal-bronze{--metal:#d9945c;--metal-soft:rgba(217,148,92,.42)}
+  .metal-silver{--metal:#dbe3f2;--metal-soft:rgba(219,227,242,.42)}
+  .metal-gold{--metal:#ffd35c;--metal-soft:rgba(255,211,92,.5)}
+  .tierword{color:var(--metal,var(--amber));font-weight:700;text-transform:capitalize}
+  .medal .metal{display:block;font-weight:700;color:var(--metal,var(--amber));text-transform:capitalize}
+  .medal b{display:block;font-size:calc(17px * var(--ts, 1))} .medal span{color:var(--muted);font-size:calc(14px * var(--ts, 1))}
+  .medal span.pick{display:block}
+  .medal.locked .disc img.face{filter:brightness(0) opacity(.3)} .medal.locked .disc .ring{border-color:var(--line);box-shadow:none} .medal.locked .disc img.frame{filter:grayscale(1) opacity(.35)}
+  .medal.locked b{color:var(--muted)}
+  h2{font-size:calc(22px * var(--ts, 1));margin:30px 0 8px}
+  .camps{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+  .camp{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .camp b{display:block} .camp span{color:var(--muted);font-size:calc(14px * var(--ts, 1))}
+  .bar{height:8px;border-radius:4px;background:var(--line);margin-top:8px;overflow:hidden} .bar i{display:block;height:100%;background:var(--green)}
+  #report{display:none}
+  table{width:100%;border-collapse:collapse;font-size:calc(14px * var(--ts, 1));margin:8px 0} th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left} th{color:var(--muted)} td.n{text-align:right}
+  .dim{color:var(--muted);font-size:calc(14px * var(--ts, 1))}
+  /* ---------- print: the kid's poster ---------- */
+  @media print{
+    /* No page size: Chrome would otherwise lay A4 paper out as Letter and scale it. */
+    @page{margin:.5in}
+    body{background:#fff;color:#111;font-size:calc(13px * var(--ts, 1))}
+    .noprint,.stats,.camps,#report,h2.camps-h{display:none}
+    .wrap{max-width:none;padding:0}
+    h1{font-size:calc(36px * var(--tsh, 1))} .sub{color:#444}
+    .wall{grid-template-columns:repeat(3,1fr);gap:14px}
+    .medal.locked{display:none}
+    .medal .disc{width:150px;height:150px} .medal b{color:#111} .medal span{color:#444}
+    /* A medal is never cut in half by a page break: the whole one moves to the next sheet. */
+    .medal{break-inside:avoid;page-break-inside:avoid}
+    .medal .disc .ring{border-color:#c2410c;box-shadow:none}
+    /* The metal word has to be readable in ink. The screen colors are picked to glow on a dark
+       page, and pale silver on white paper is barely there, so paper gets darker ones. */
+    .metal-bronze .metal{color:#8f4513} .metal-silver .metal{color:#4b5563} .metal-gold .metal{color:#8a6300}
+    .poster-only{display:block !important}
+    body.print-report .wall,body.print-report h2.wall-h{display:none}
+    /* .poster-only above is !important, so the report has to be too, or the poster's Name/Date line
+       prints in the middle of the report. */
+    body.print-report .poster-only{display:none !important}
+    /* The report on paper: dark labels (the screen's pale blue-gray is about 2:1 on white), white stat
+       cards (navy panels hide the black numbers when background graphics are on), numbers under
+       right-aligned headers, tighter rows, and the header row repeated on every sheet. */
+    .stat{background:#fff;border-color:#9ca3af} .stat span,th,.dim{color:#374151}
+    th,td{padding:3px 6px;border-bottom-color:#d1d5db} th.n{text-align:right}
+    thead{display:table-header-group} tr{break-inside:avoid;page-break-inside:avoid} h3{break-after:avoid;page-break-after:avoid}
+    body.print-report #report{display:block}
+    body.print-report .stats{display:grid}
+  }
+  .poster-only{display:none;margin-top:26px;border-top:2px solid #c2410c;padding-top:10px;color:#111}
+  /* Dynamic Type, as in the game (kit/index.html): every size is N px times --ts, set only when the iPhone
+     or iPad text size is not the standard one. Paper is always printed at the standard size. */
+  html[data-textsize=larger] body{overflow-wrap:break-word}
+  html[data-textsize=larger] select,html[data-textsize=larger] input,html[data-textsize=larger] textarea{max-width:100%}
+  html[data-textsize=larger] table{display:block;max-width:100%;overflow-x:auto}
+  @media print{ :root{--ts:1 !important;--tsh:1 !important} }
+</style>
+<script>
+  // Dynamic Type (1.0.14). The text follows the system text size: Settings, then Display & Brightness,
+  // then Text Size, or Accessibility's Larger Text. iOS reports that size through the system body
+  // font (17 px at the default), and every font size on this page is written as
+  // calc(N px * var(--ts, 1)). At the default size nothing is set, so every size computes to exactly
+  // what it was before this existed. Headings (28 px and up) grow at half the rate (--tsh), so the
+  // largest sizes stay on the screen. Only on Apple touch devices: a Mac's system body font is 13 px,
+  // and a desktop browser has no such font at all, so neither must shrink or move a thing.
+  (function(){
+    var root=document.documentElement;
+    function touchApple(){
+      try{ return !!window.ODYSSEY_APP || /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+        (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }catch(e){ return false; }
+    }
+    var probe=null;
+    function measure(){
+      var p=probe, temp=!p;
+      if(temp){
+        p=document.createElement('span');
+        p.style.cssText='font:-apple-system-body;position:absolute;visibility:hidden;pointer-events:none;left:0;top:0';
+        p.textContent='x'; root.appendChild(p);
+      }
+      var px=parseFloat(getComputedStyle(p).fontSize);
+      if(temp) p.parentNode.removeChild(p);
+      return px;
+    }
+    function apply(){
+      try{
+        var r=1;
+        if(touchApple() && window.CSS && CSS.supports && CSS.supports('font','-apple-system-body')){
+          var px=measure(); if(px>0) r=px/17;
+        }
+        if(Math.abs(r-1)<0.02){ root.style.removeProperty('--ts'); root.style.removeProperty('--tsh'); root.removeAttribute('data-textsize'); return; }
+        r=Math.max(0.82, Math.min(r, 3.2));
+        root.style.setProperty('--ts', r.toFixed(3));
+        root.style.setProperty('--tsh', (1+(r-1)/2).toFixed(3));
+        root.setAttribute('data-textsize', r>1?'larger':'smaller');
+      }catch(e){}
+    }
+    // Text Size can change while the page stays on screen: the Control Center slider, or Settings
+    // beside the app in Split View on an iPad. A hidden probe stays in the page, set in the system
+    // body font, and a ResizeObserver sees its box change the moment iOS changes that font, in
+    // whatever order WebKit's own update lands (Fable review, 5 October 2026).
+    function watch(){
+      try{
+        if(!touchApple() || !window.ResizeObserver || !document.body) return;
+        // Without the system body font the probe would inherit the page's own text size, grow with it,
+        // and call apply() for nothing; so watch only where iOS actually supplies that font.
+        if(!(window.CSS && CSS.supports && CSS.supports('font','-apple-system-body'))) return;
+        probe=document.createElement('span');
+        probe.setAttribute('aria-hidden','true');
+        probe.style.cssText='font:-apple-system-body;position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;white-space:nowrap';
+        probe.textContent='x';
+        document.body.appendChild(probe);
+        new ResizeObserver(apply).observe(probe);
+      }catch(e){}
+    }
+    apply();
+    // A grown-up changes Text Size in the Settings app, then comes back: the page was hidden meanwhile.
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) apply(); });
+    window.addEventListener('pageshow', apply);
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', watch); else watch();
+  })();
+</script>
+</head>
+<body>
+<main class="wrap">
+  <div class="row noprint" style="justify-content:space-between">
+    <a class="btn" href="index.html">← Back to the game</a>
+    <div class="row"><button class="btn primary" id="printMedals">Print my medals</button><button class="btn" id="printReport">Print the report</button></div>
+  </div>
+  <h1 id="title">Medal wall</h1>
+  <p class="sub" id="subtitle"></p>
+  <div class="stats" id="stats"></div>
+  <h2 class="wall-h">Medals</h2>
+  <ul class="wall" id="wall" role="list" aria-label="Medals"></ul>
+  <div class="poster-only"><b style="font-size:calc(16px * var(--ts, 1))">Name: ______________________________</b> &nbsp;&nbsp; Date: ______________<br><span style="font-size:calc(12px * var(--ts, 1))">Odyssey · Each medal is a whole campaign finished: five days, one mission a day.</span></div>
+  <h2 class="camps-h">Campaigns</h2>
+  <div class="camps" id="camps"></div>
+  <div id="report"></div>
+  <p class="dim noprint" style="margin-top:26px">Medals are earned by finishing a campaign. The report is for grown-ups and needs the parent code. Nothing here leaves this device unless you print or share it.</p>
+</main>
+<script src="missions.js"></script>
+<script>
+(function(){
+  const M=window.BASECAMP_MISSIONS; M.campaigns=M.campaigns.filter(c=>c.ready!==false); const READY=true; const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  let S=null, C=null; try{ C=JSON.parse(localStorage.getItem('basecamp.v3')||'null'); if(C&&C.current&&C.profiles) S=C.profiles[C.current]; if(!S) S=JSON.parse(localStorage.getItem('basecamp.v2')||'null'); }catch(e){}
+  S=S||{callsign:'Ranger',done:{},badges:{},streak:0}; const PIN=(C&&C.parentPin)||S.parentPin;
+  const badges=S.badges||{}; const done=S.done||{}; const starsBest=S.stars||{}; const tiers=S.tiers||{}; const choices=S.choices||{};
+  // The same rules as the game: bronze for finishing, silver when every mission stands at two stars
+  // or better, gold when every one is at three. Worked out here too, so a save written by an older
+  // build still shows the right metal.
+  const TIERS=['bronze','silver','gold'];
+  function starsFor(got,total){ return got===total ? 3 : (got>=total-2 ? 2 : 1); }
+  // Stars count only the answers right the first time. A record holds the total right and how many
+  // of those took a second look after the hint, so the first-try count is the difference.
+  function firstTry(r){ const got=r.recon[0]+r.nav[0]+r.orders[0]; return Math.max(0, got-(r.retry||0)); }
+  function starsFromRecord(rec){ if(!rec) return 0; let best=0;
+    [rec, rec.latest].forEach(r=>{ if(!r||!r.recon||!r.nav||!r.orders) return;
+      const total=r.recon[1]+r.nav[1]+r.orders[1];
+      best=Math.max(best, (total<=0 || /^\(/.test(String(r.date||''))) ? 1 : starsFor(firstTry(r),total)); });
+    return best||1; }
+  function bestStars(p){ return Math.max(starsBest[p.id]||0, done[p.id]?starsFromRecord(done[p.id]):0); }
+  function tierOf(c){ const was=tiers[c.id]||null;
+    if(!c.patrols.length) return was;
+    // Marks (a parent's, a start link's, a camp code's) are not play, as in the game's own tierOf:
+    // a campaign "finished" by marks has no medal (parent audit, 17 Oct 2026).
+    const played=r=>!!r && (!/^\((set by parent|placed by link|from code)\)$/.test(String(r.date||'')) || !!r.latest);
+    const earned=!!badges[c.id] || c.patrols.every(p=>played(done[p.id])); if(!earned) return was;
+    const st=c.patrols.map(bestStars);
+    const t = st.every(s=>s>=3) ? 'gold' : (st.every(s=>s>=2) ? 'silver' : 'bronze');
+    return TIERS.indexOf(was)>TIERS.indexOf(t) ? was : t; }
+  // A medal carried by a "Moving to another device" code is stored as true; the game prints that as
+  // "on another device", and so does this page now (it printed "Earned true").
+  const earnedOn=v=>{ if(v===true) return 'on another device'; const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v||'')); if(!m) return String(v||'');
+    try{ return new Date(+m[1], +m[2]-1, +m[3]).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}); }catch(e){ return String(v); } };
+  // "watch" -> "watches", "pitch" -> "pitches"; "shift" -> "shifts".
+  const plural=n=>/(s|sh|ch|x)$/.test(n) ? n+'es' : n+'s';
+  // Missions played here or carried from another device count; marks do not.
+  const missions=Object.values(done).filter(d=>d && (d.date===true || d.date==='(from another device)' || (d.date && !/^\(/.test(d.date)))).length;
+  const earned=M.campaigns.filter(c=>badges[c.id]).length;
+  // The game's rule: a streak is alive only if the last mission was today or yesterday.
+  function liveStreak(){ if(!S.streak||!S.lastDay) return 0; const y=new Date(); y.setDate(y.getDate()-1); const yd=y.getFullYear()+'-'+String(y.getMonth()+1).padStart(2,'0')+'-'+String(y.getDate()).padStart(2,'0'); return S.lastDay>=yd ? S.streak : 0; }
+  document.getElementById('title').textContent=(S.callsign||'Ranger')+"'s medal wall";
+  document.getElementById('subtitle').textContent=earned? (earned+' of '+M.campaigns.length+' campaigns finished. Every medal is five days of work.') : 'Finish a campaign to earn its bronze medal. Two stars on every mission makes it silver, three makes it gold. Stars come from the answers right on the first try.';
+  document.getElementById('stats').innerHTML=`<div class="stat"><b>${earned}</b><span>${earned===1?'medal':'medals'}</span></div><div class="stat"><b>${missions}</b><span>${missions===1?'mission':'missions'} finished</span></div><div class="stat"><b>${liveStreak()}</b><span>day streak</span></div>`;
+  // Each metal is its own picture; a campaign not finished yet gets the plain frame.
+  const BLANK_MEDAL='assets/medal-frame.png';
+  const medalSrc=t=>TIERS.indexOf(t)>=0 ? 'assets/medal-'+t+'.png' : BLANK_MEDAL;
+  const emblemSrc=id=>'assets/emblem-'+id+'.png';
+  document.getElementById('wall').innerHTML=M.campaigns.map(c=>{ const f=M.companion.forms[c.form]||{}; const src=f.avatarSrc||f.portrait; const got=!!badges[c.id]; const t=got?(tierOf(c)||'bronze'):null;
+    return `<li class="medal ${got?'metal-'+t:'locked'}" role="listitem"><div class="disc"><img class="face" src="${src}" alt=""><div class="ring"></div><img class="frame" src="${got?medalSrc(t):BLANK_MEDAL}" alt="" onload="this.parentNode.classList.add('framed')" onerror="this.remove()">${got?`<img class="emblem" src="${emblemSrc(c.id)}" alt="${esc(c.title)}" onerror="this.remove()">`:''}</div><b>${esc(c.title)}</b>${got?`<span class="metal">${t}</span>`:''}<span>${got?('Earned '+esc(earnedOn(badges[c.id]))):'Not yet'}</span>${(()=>{ const ch=choices[c.id], o=got && c.finale && ch!=null && (c.finale.options||[])[ch]; return o&&o.label?`<span class="pick">Your pick: ${esc(o.label)}</span>`:''; })()}</li>`; }).join('');
+  document.getElementById('camps').innerHTML=M.campaigns.map(c=>{ const n=c.patrols.filter(p=>done[p.id]).length, t=c.patrols.length||5; return `<div class="camp"><b>${esc(c.title)}</b><span>${n} of ${t} ${esc(plural((c.dayNoun||'mission').toLowerCase()))}${badges[c.id]?' · '+(tierOf(c)||'bronze')+' medal':''}</span><div class="bar"><i style="width:${Math.round(100*n/t)}%"></i></div></div>`; }).join('');
+  // The app cannot print (its web view has no print handler), so there the buttons would do nothing.
+  // (.btn sets display, which beats the hidden attribute, so the style is set directly.)
+  if(window.ODYSSEY_APP) ['printMedals','printReport'].forEach(id=>{ document.getElementById(id).style.display='none'; });
+  // With no medal yet the poster would be a blank sheet, so say how to get one instead of printing.
+  document.getElementById('printMedals').onclick=()=>{ if(!earned){ const sub=document.getElementById('subtitle'); sub.setAttribute('role','status'); sub.textContent='Finish a campaign to earn its first medal, then print it.'; return; } document.body.classList.remove('print-report'); window.print(); };
+  document.getElementById('printReport').onclick=()=>{
+    if(PIN){ const pin=prompt('Parent code (four digits):'); if(pin!==PIN){ alert('That is not the parent code.'); return; } }
+    const rows=[]; M.campaigns.forEach(k=>k.patrols.forEach(p=>{ if(done[p.id]) rows.push({k,p,d:done[p.id]}); }));
+    rows.sort((a,b)=>String(a.d.date).localeCompare(String(b.d.date)));
+    // First runs and replays both, as the game's own report counts them.
+    const sk={}; rows.forEach(({d})=>[d, d.latest].filter(Boolean).forEach(r=>(r.tasks||[]).forEach(t=>{ const r=sk[t.skill]||(sk[t.skill]={n:0,first:0,retry:0,shown:0}); r.n++; r[t.result]=(r[t.result]||0)+1; })));
+    const byMonth={}; rows.forEach(({d})=>{ const m=String(d.date).slice(0,7); if(/^\d{4}-\d{2}$/.test(m)) byMonth[m]=(byMonth[m]||0)+1; });
+    let h=`<h2>Report for a grown-up</h2><p class="dim">The mission scores are first attempts; a mission played again never overwrites them. The skill table counts every run, replays included. This compares ${esc(S.callsign)} with ${esc(S.callsign)} over time, which is the only comparison that helps.</p>`;
+    // Nothing finished yet: one plain line instead of three tables with no rows.
+    if(!rows.length) h+=`<p>No missions finished yet.</p>`; else {
+    h+=`<h3>Over time</h3><table><thead><tr><th scope="col">Month</th><th scope="col" class="n">Missions finished</th><th scope="col" class="n">Medals by then</th></tr></thead><tbody>${Object.keys(byMonth).sort().map(m=>`<tr><td>${m}</td><td class="n">${byMonth[m]}</td><td class="n">${M.campaigns.filter(c=>badges[c.id]&&String(badges[c.id]).slice(0,7)<=m).length}</td></tr>`).join('')}</tbody></table>`;
+    const meds=M.campaigns.filter(c=>tierOf(c));
+    if(meds.length) h+=`<h3>Medals</h3><table><thead><tr><th scope="col">Campaign</th><th scope="col">Medal</th><th scope="col" class="n">Missions at 3 stars</th><th scope="col" class="n">At 2 or better</th><th scope="col">Finished</th></tr></thead><tbody>${meds.map(c=>`<tr><td>${esc(c.title)}</td><td>${tierOf(c)}</td><td class="n">${c.patrols.filter(p=>bestStars(p)>=3).length} of ${c.patrols.length}</td><td class="n">${c.patrols.filter(p=>bestStars(p)>=2).length} of ${c.patrols.length}</td><td>${esc(earnedOn(badges[c.id]))}</td></tr>`).join('')}</tbody></table><p class="dim">Bronze is the campaign finished. Silver is every mission at two stars or better, gold is every mission at three. Stars come from the answers right on the first try; an answer got right after the hint is a second look and does not count toward them. Any mission can be played again to raise its stars; the medal follows the best run of each one and never goes down.</p>`;
+    h+=`<h3>By skill</h3><table><thead><tr><th scope="col">Skill</th><th scope="col" class="n">Tries</th><th scope="col" class="n">First try</th><th scope="col" class="n">After hint</th><th scope="col" class="n">Shown</th></tr></thead><tbody>${Object.keys(sk).map(s=>`<tr><td>${esc(s)}</td><td class="n">${sk[s].n}</td><td class="n">${sk[s].first||0}</td><td class="n">${sk[s].retry||0}</td><td class="n">${sk[s].shown||0}</td></tr>`).join('')}</tbody></table>`;
+    h+=`<h3>Missions</h3><table><thead><tr><th scope="col">Date</th><th scope="col">Campaign</th><th scope="col">Mission</th><th scope="col" class="n">Reading</th><th scope="col" class="n">Math</th><th scope="col" class="n">Directions</th><th scope="col" class="n">Attempts</th></tr></thead><tbody>${rows.map(({k,p,d})=>/^\(/.test(d.date)?`<tr><td class="dim">${esc(d.date.replace(/[()]/g,''))}</td><td>${esc(k.title)}</td><td>${esc(p.title)}</td><td class="n dim" colspan="4">not scored</td></tr>`:`<tr><td>${d.date}</td><td>${esc(k.title)}</td><td>${esc(p.title)}</td><td class="n">${d.recon[0]}/${d.recon[1]}</td><td class="n">${d.nav[0]}/${d.nav[1]}</td><td class="n">${d.orders[0]}/${d.orders[1]}</td><td class="n">${d.attempts||1}</td></tr>`).join('')}</tbody></table>`;
+    }
+    const r=document.getElementById('report'); r.innerHTML=h; r.style.display='block'; document.body.classList.add('print-report'); window.print(); };
+})();
+</script>
+</body>
+</html>
